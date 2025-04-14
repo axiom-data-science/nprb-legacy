@@ -60,5 +60,39 @@ k <- j %>% filter(str_starts(project_name, '0[0-9]{3} '))
 j <- j %>% filter(str_starts(project_name, '1[1-4][0-9]{2} '))
 j <- bind_rows(j, k)
 remove(k)
-j[1]
+j[2]
 
+## get all files in each project, try this:
+# SELECT id, bytes, filename, mimetype, folder_id, project_id 
+# FROM document
+# WHERE project_id IN j[1]
+proj_ids <- j %>% 
+  pull(project_id) %>%
+  paste(collapse = ",")
+
+q <- paste0(
+  "SELECT id, bytes, filename, mimetype, folder_id, project_id 
+  FROM document
+  WHERE project_id IN (", proj_ids ,") 
+    AND deleted IS NULL
+    AND folder_id IS NOT NULL"
+)
+all_docs <- dbGetQuery(con, q)
+
+## get all folders for all files, try something like:
+# SELECT id, name, parent, project_id
+# FROM folder
+# WHERE id in (", all_folders, ")"
+
+folder_ids <- all_docs %>% 
+  pull(folder_id) %>%
+  paste(collapse = ",") %>% 
+  unique()
+
+q <- paste0(
+  "SELECT id, name, parent, project_id
+  FROM folder
+  WHERE id in (", folder_ids, ")"
+)
+
+all_folders <- dbGetQuery(con, q)
