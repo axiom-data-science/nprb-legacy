@@ -1,8 +1,9 @@
 if (!("pacman" %in% rownames(installed.packages()))) {
   install.packages("pacman")
 }
-pacman::p_load(tidyverse, DBI, RPostgreSQL, keyring)
 remove(list=ls())
+pacman::p_load(tidyverse, DBI, RPostgreSQL, keyring)
+
 ## narrative summary of the code
 # search RW DB for projects in the NPRB Org that begin with '0[0-9]{3}' or with 
 # '1[1-4][0-9]{2}' to find all projects funded under NPRB Core program from 
@@ -115,91 +116,46 @@ get_parents <- function(folders_df) {
 all_folders <- get_parents(file_folders)
 
 names(all_docs)[1] <- "file_id"
+names(all_docs)[3] <- "file_name"
 names(all_docs)
-names(all_folders)[3] <- "parent_id"
+names(all_folders)[1:3] <- c("folder_id", "folder_name", "parent_id")
 names(all_folders)
 
 docs_w_folders <- all_docs %>% 
   left_join(all_folders, by = c("folder_id" = "folder_id")) %>% 
-  select(project_id.x, folder_id, folder_name, filename, bytes, mimetype, parent_id)
+  select(project_id.x, folder_id, folder_name, file_name, bytes, mimetype, parent_id)
 
 # create paths in all_folders table
 names(all_folders)
 
+
 folder_goofin <- all_folders %>% 
-  select(folder_id, folder_name, project_id, parent_id, )
+  select(folder_id, parent_id)
+copy_df <- folder_goofin
 
-num_cols <- ncol(folder_goofin)
-folder_goofin[paste0("p",num_cols+1)] <- NA
-
-get_parent_info <- function(folders_df){
-  num_cols <- ncol(folders_df)
-  folders_df[paste0("p",num_cols+1)] <- NA
-  for (i in 1:nrow(folders_df)){
-    if (is.na(folders_df$parent_id[i])){
-      next
-    }
-    else {
-      folders_df$p2[i] <- 
-        folders_df$parent_id[folders_df$folder_id == folders_df$parent_id[i]]
-    }
+get_next_gen <- function(folders_df, cloned_df){
+  folders_df <- left_join(folders_df, cloned_df, by = c("parent_id" = "folder_id"),
+                          keep = FALSE, na_matches = "never", multiple = "any")
+  print(names(folders_df))
+  new_names <- c()
+  for (i in 1:ncol(folders_df)){
+    new_names[i] <- paste0("folder_depth_", i)
   }
-  ncol(folders_df)
-  if (!is.na(all(folders_df[,ncol(folders_df)]))){
-    get_parent_info(folders_df)
-  } else {
+  names(folders_df) <- new_names
+  names(folders_df)[ncol(folders_df)] <- "parent_id"
+  if (all(is.na(folders_df$parent_id))){
     return(folders_df)
   }
-  
-}
-
-
-
-
-all_folders$folder_id[all_folders$folder_id == 371709]
-names(folder_goofin)
-folder_goofin$parent2 <- folder_goofin$folder_id[]
-
-sample_n(all_folders, 10)
-
-all_folders$path <- NA
-
-create_paths <- function(folders_df){
-  for (i in 1:nrow(folders_df)){
-    if (is.na(folders_df$parent_id[i])){
-      next
-    }
-    parent_info <- get_parent_info(folders_df, folders_df$parent_id[i])
-    while(!is.na(parent_info$parent_id)){
-      folders_df$path[i] <- paste0(parent_info$folder_name, "/", folders_df$path[i])
-      parent_info <- get_parent_info(folders_df, parent_info$parent_id)
-    }
+  else {
+    folders_df <- get_next_gen(folders_df, cloned_df)
   }
 }
 
-get_parent_info <- function(folders_df, parents_id){
-  parent_deets <- folders_df[folders_df$folder_id == parents_id,]
-  return(parent_deets)
-}
+folder_goofin <- get_next_gen(folder_goofin, copy_df)
 
-create_paths <- function(folders_df){
-  for (i in 1:nrow(folders_df)){
-    if (is.na(folders_df$parent_id[i])){
-      next
-    }
-    else {
-      parent_info <- get_parent_info(folders_df, folders_df$parent_id[i])
-      while(!is.na(parent_info$parent_id)){
-        folders_df$path[i] <- paste0(parent_info$folder_name,"/",folders_df$path[i])
-        parent_info <- get_parent_info(folders_df, parent_info)
-      }
-    }
-  }
-}
 
-names(all_folders)
-all_f2 <- create_paths(all_folders)
-  
+
+
 
 # get project names
 !is.na(all_folders$parent_id)[1:25]
