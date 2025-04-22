@@ -4,23 +4,20 @@
 ## GH: iamchrisser
 
 ## Script narrative
-# 1. Search RW DB for projects in the NPRB Org that begin with '0[0-9]{3}' 
-#    or with '1[1-4][0-9]{2}' to find all projects funded under NPRB Core 
-#    program from years before Axiom took over as the data management contractor 
-#    for NPRB.
-#
-# 2. For each project identified, look for: 
-#   1. two documents in the files folder named like:
-#        'NPRB\.2[0-9]{3}\.[0-9]{2}\.[xml|.zip]'
-#     a. check for the existence of a subfolder called 'data not described'
-#     b. check for more than one zip or xml file in that folder.
+# Search RW DB for projects in the NPRB Org that begin with '0[0-9]{3}' 
+# or with '1[1-4][0-9]{2}' to find all projects funded under NPRB Core 
+# program from years before Axiom took over as the data management contractor 
+# for NPRB. For each project, get information on all files in the project and 
+# create `01_full_inventory.csv` with the following columns:
+# `project_name`, `project_id`, `folder_name`, `folder_id`, `file_name`,
+# `file_id`, `bytes`, `mimetype`, `path`.
 
 ###############################################################################
 ############################### 01-inventory.R ################################
 ###############################################################################
 
 ## Load what's needed
-if (!("pacman" %in% rownames(installed.packages()))) {
+if (!("pacman" %in% rownames(installed.packages()))){
   install.packages("pacman")
 }
 pacman::p_load(tidyverse, DBI, RPostgreSQL, keyring)
@@ -35,8 +32,8 @@ con <- dbConnect(
   dbname = "research_workspace",
   host = "oltp.db.axiomptk",
   port = 5432,
-  password = key_get("research_workspace", keyring = "dbs"),
-  user = key_list("research_workspace", keyring = "dbs")[1,2]
+  password = key_get("workspace_read", keyring = "dbs"),
+  user = "workspace_read"
 )
 
 # Query RW db to get id and names for all projects in NPRB 
@@ -86,45 +83,49 @@ q <- paste0(
   FROM folder
   WHERE id in (", folder_ids, ")"
 )
-remove=(folder_ids)
-#file_folders <- dbGetQuery(con, q)
+remove(folder_ids)
 
 all_folders <- get_parents(dbGetQuery(con, q))
-names(all_folders)[1:3] <- c("folder_id", "folder_name", "parent_id")
+dbDisconnect(con)
 
+names(all_folders)[1:3] <- c("folder_id", "folder_name", "parent_id")
 
 docs_w_folders <- all_docs %>% 
   left_join(all_folders, by = c("folder_id" = "folder_id")) %>% 
-  select(project_id.x, folder_id, folder_name, file_name, bytes, mimetype, parent_id)
-
+  select(project_id.x, folder_id, folder_name, file_id, 
+         file_name, bytes, mimetype, parent_id)
 remove(all_docs)
 
 ## create paths in all_folders table
-
 af_copy <- all_folders %>% 
   select(folder_id, parent_id)
-
-af_copy <- get_next_gen(af_copy)
-
-names(af_copy)
+another_copy <- af_copy
+af_copy <- get_next_gen(af_copy, another_copy)
 
 ## get folder names from ids
+another_copy <- get_folder_names(af_copy, all_folders)
+names(another_copy) <- make.names(names(another_copy), unique = TRUE)
 
-# can I get rid of copy_df?
-copy_df <- get_folder_names(af_copy, all_folders)
-remove(af_copy)
-names(copy_df) <- make.names(names(copy_df), unique = TRUE)
-#names(copy_df)
-
-all_paths <- make_path(copy_df) %>% 
+all_paths <- make_path(another_copy) %>% 
   select("folder_depth_1", "path")
+remove(another_copy)
 
-# can I get rid of the all_folders2?
 all_folders <- all_folders %>% 
-  left_join(all_paths, by = c("folder_id" = "folder_depth_1"))
-#all_folders2 <- all_folders %>% 
   left_join(all_paths, by = c("folder_id" = "folder_depth_1"))
 
 ## get project names
-# I didn't save these earlier, so I'd need to go back to the DB 
-# or create another table earlier in the script
+docs_w_folders <- docs_w_folders %>% 
+  left_join(project_names, by = c("project_id.x" = "proj_id")) %>% 
+  rename(project_name = proj_name, project_id = project_id.x) %>%
+  select(project_name, project_id, folder_name, folder_id, file_name, 
+         file_id, bytes, mimetype)
+
+full_inventory <- docs_w_folders %>% 
+  left_join(all_folders[c("folder_id", "path")], by = c("folder_id" = "folder_id")) %>%
+  select(project_name, project_id, folder_name, folder_id, file_name, 
+         file_id, bytes, mimetype, path)
+remove(docs_w_folders)
+summary(full_inventory)
+
+write_csv(full_inventory, "01_full_inventory.csv")
+remove(list=ls())
