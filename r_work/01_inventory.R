@@ -3,9 +3,17 @@
 ## Chris Turner - 2025-04-22
 ## GH: iamchrisser
 
-## {This is a description of the project and this code script.}
-## {This is a description of the project and this code script.}
-## {This is a description of the project and this code script.}
+## Script narrative
+# 1. Search RW DB for projects in the NPRB Org that begin with '0[0-9]{3}' 
+#    or with '1[1-4][0-9]{2}' to find all projects funded under NPRB Core 
+#    program from years before Axiom took over as the data management contractor 
+#    for NPRB.
+#
+# 2. For each project identified, look for: 
+#   1. two documents in the files folder named like:
+#        'NPRB\.2[0-9]{3}\.[0-9]{2}\.[xml|.zip]'
+#     a. check for the existence of a subfolder called 'data not described'
+#     b. check for more than one zip or xml file in that folder.
 
 ###############################################################################
 ############################### 01-inventory.R ################################
@@ -19,29 +27,7 @@ pacman::p_load(tidyverse, DBI, RPostgreSQL, keyring)
 
 source("01_nprb-inventory_functions.R")
 
-## Narrative summary of the code
-# search RW DB for projects in the NPRB Org that begin with '0[0-9]{3}' or with 
-# '1[1-4][0-9]{2}' to find all projects funded under NPRB Core program from 
-# years before Axiom took over as the data management contractor for NPRB.
-#
-# For each project identified, look for: 
-# 1. two documents in the files folder named like:
-#      'NPRB\.2[0-9]{3}\.[0-9]{2}\.[xml|.zip]'
-#   a. check for the existence of a subfolder called 'data not described'
-#   b. check for more than one zip or xml file in that folder.
-#
-# So to start:
-# 1. get all matching projects. 
-# 2. get all files
-# 3. get folder path for all files
-
-## use RW db to get all projects in NPRB organization that match the regex
-# 1. specify the db drive
-# 2. define the connection
-#    Using keyring to provide credentials
-#    https://solutions.posit.co/connections/db/best-practices/managing-credentials/
-# 3. write a query to get the files in each folder associated with a submitted package
-
+# connect to the RW db
 psql <- dbDriver("PostgreSQL")
 
 con <- dbConnect(
