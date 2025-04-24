@@ -22,7 +22,7 @@ if (!("pacman" %in% rownames(installed.packages()))){
 }
 pacman::p_load(tidyverse, DBI, RPostgreSQL, keyring)
 
-source("01_nprb-inventory_functions.R")
+source("00_inventory_functions.R")
 
 # connect to the RW db
 psql <- dbDriver("PostgreSQL")
