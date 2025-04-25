@@ -55,6 +55,13 @@ write_csv(projects_summary, timestamp_filename(data_dir, "02_projects_summary"))
 # get volume of just zip and xml for potential archives
 
 volume_all <- get_volumes(big_inv)
+vol_arch <- volume_all
+
+vol_arch$archive <- 
+  ifelse(vol_arch$project_id %in% potential_archives$project_id, 1, 0)
+
+write_csv(vol_arch, 
+          timestamp_filename(data_dir, "02_all_volumes"))
 
 pa <- potential_archives %>%
   left_join(volume_all, by = c("project_id" = "project_id")) %>% 
