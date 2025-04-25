@@ -143,8 +143,20 @@ make_path <- function(folder_df){
 #' @noRd
 get_volumes <- function(some_df){
   some_df %>%
-    group_by(project_name) %>%
-    summarise(total_volume = sum(bytes),
+    group_by(project_name, project_id) %>%
+    summarise(total_MB = round(sum(bytes) / 100000, 3),
               n_files = n()) %>%
-    select(project_name, n_files, total_volume)
+    select(project_name, project_id, n_files, total_MB)
+}
+
+timestamp_filename <- function(file_dir, file_name){
+  # Format the date and time as a string
+  current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+  
+  # Create the new file name with the timestamp
+  new_file_name <- paste0(file_dir, file_name, 
+                          "_", current_time, ".csv") |>
+    str_replace_all(" ", "_")
+  
+  return(new_file_name)
 }

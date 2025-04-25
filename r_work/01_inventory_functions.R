@@ -132,3 +132,19 @@ make_path <- function(folder_df){
   return(folder_df)
 }
 
+#' Get volume for all files in each project
+#' 
+#' This function uses group_by to summarise the total volume and number of files
+#' in each project in the `some_df` data frame. It returns a data frame with
+#' the project name, number of files, and total volume in bytes.
+#' 
+#' @param some_df a data frame with columns project_name, bytes, and file_name
+#' 
+#' @noRd
+get_volumes <- function(some_df){
+  some_df %>%
+    group_by(project_name) %>%
+    summarise(total_volume = sum(bytes),
+              n_files = n()) %>%
+    select(project_name, n_files, total_volume)
+}
