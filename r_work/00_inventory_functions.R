@@ -188,18 +188,15 @@ timestamp_filename <- function(file_dir, file_name){
 #' 
 #' @noRd
 wget_file_from_rw <- function(out_dir, f_id, f_name){
-  # given a the id and name of a file in the RW, pull the file down
-  # mkdir of project code, e.g. 0204, 0908, etc.
+  # given an output directory and the id and name of a file in the RW, 
+  # use the RW API to pull the files down and save them in the output dir
+
   file_url <- paste0("https://researchworkspace.com/files/",
            as.character(f_id), "/", f_name)
-  api_key <- "zMmzunPWHV68Vg"
+  api_key <- Sys.getenv("RW_API_KEY")
   wget_command <- paste0('wget --header "api-key: ', api_key,
                         '" -P ', out_dir, ' ', file_url)
   system(wget_command)
-  #download.file(file_url, local_file, mode = "wb")  
 }
 
 
-
-
-# '" -P /data/',out_dir,

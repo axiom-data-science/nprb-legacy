@@ -1,6 +1,8 @@
 examples/
 py_work/
+data/
 /r_work/.Rproj.user/
+/r_work/.Renviron
 /r_work/scratch.R
 /r_work/data_out
 .Rproj.user

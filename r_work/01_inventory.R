@@ -20,7 +20,7 @@
 if (!("pacman" %in% rownames(installed.packages()))){
   install.packages("pacman")
 }
-pacman::p_load(tidyverse, DBI, RPostgreSQL, keyring)
+pacman::p_load(tidyverse, DBI, RPostgreSQL)
 
 source("00_inventory_functions.R")
 
@@ -32,9 +32,19 @@ con <- dbConnect(
   dbname = "research_workspace",
   host = "oltp.db.axiomptk",
   port = 5432,
-  password = key_get("workspace_read", keyring = "dbs"),
+  password = Sys.getenv("WORKSPACE_READ"),
   user = "workspace_read"
 )
+
+Sys.getenv("WORKSPACE_READ")
+# con <- dbConnect(
+#   drv = psql,
+#   dbname = "research_workspace",
+#   host = "oltp.db.axiomptk",
+#   port = 5432,
+#   password = key_get("workspace_read", keyring = "dbs"),
+#   user = "workspace_read"
+# )
 
 # Query RW db to get id and names for all projects in NPRB 
 # organization that match the regex
