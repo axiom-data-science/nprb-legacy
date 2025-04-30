@@ -149,6 +149,17 @@ get_volumes <- function(some_df){
     select(project_name, project_id, n_files, total_MB)
 }
 
+
+#' create timestamps on filenames
+#' 
+#' This function uses system time to timestamp file names. This was useful
+#' when testing my scripts and writing out multiple versions of some of the 
+#' intermediary products.
+#' 
+#' @param file_dir directory into which the file will be written
+#' @param file_name name of the file to be written out, without a timestamp
+#' 
+#' @noRd
 timestamp_filename <- function(file_dir, file_name){
   # Format the date and time as a string
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
@@ -160,3 +171,35 @@ timestamp_filename <- function(file_dir, file_name){
   
   return(new_file_name)
 }
+
+
+#' Get a file from the Research Workspace
+#' 
+#' This function uses uses the file_id, file_name, and RW url formatting 
+#' to create a wget command for downloading the specified file into 
+#' a folder named based on the NPRB project code (YYNN), where YY is
+#' the year the project award was distributed and NN is the sequential project 
+#' number assigned by NPRB
+#' 
+#' @param p_code the project code assigned by NPRB for the project that 
+#' created the data
+#' @param f_id the file_id from the RW DB for the file to be downloaded
+#' @param f_name the name of the file in the RW
+#' 
+#' @noRd
+wget_file_from_rw <- function(out_dir, f_id, f_name){
+  # given a the id and name of a file in the RW, pull the file down
+  # mkdir of project code, e.g. 0204, 0908, etc.
+  file_url <- paste0("https://researchworkspace.com/files/",
+           as.character(f_id), "/", f_name)
+  api_key <- "zMmzunPWHV68Vg"
+  wget_command <- paste0('wget --header "api-key: ', api_key,
+                        '" -P ', out_dir, ' ', file_url)
+  system(wget_command)
+  #download.file(file_url, local_file, mode = "wb")  
+}
+
+
+
+
+# '" -P /data/',out_dir,

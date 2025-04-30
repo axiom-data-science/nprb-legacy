@@ -14,10 +14,11 @@
 ###############################################################################
 
 ## Load what's needed
-if (!("pacman" %in% rownames(installed.packages()))){
-  install.packages("pacman")
-}
-pacman::p_load(tidyverse)
+# if (!("pacman" %in% rownames(installed.packages()))){
+#   install.packages("pacman")
+# }
+# pacman::p_load(tidyverse)
+library(tidyverse)
 source("00_inventory_functions.R")
 data_dir <- "data_out/"
 
@@ -69,12 +70,12 @@ pa <- potential_archives %>%
   
 file_deets <- big_inv %>%
   filter(file_name %>% str_detect("NPRB\\.2[0-9]{3}\\.[0-9]{2}\\.[zip|xml]")) %>%
-  select(project_name, project_id, path, file_name, bytes)
+  select(project_name, project_id, path, file_name, file_id, bytes)
 
 potential_archvies <- pa %>%
   left_join(file_deets, by = c("project_id" = "project_id", "path" = "path")) %>%
   select(project_name.x, project_id, path, n_zip, n_xml, n_files, total_MB,
-         file_name, bytes) %>% 
+         file_name, file_id, bytes) %>% 
   mutate(bytes = bytes / 1000000) %>%
   rename(file_MB = bytes, project_name = project_name.x)
 
