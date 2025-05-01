@@ -36,16 +36,6 @@ con <- dbConnect(
   user = "workspace_read"
 )
 
-Sys.getenv("WORKSPACE_READ")
-# con <- dbConnect(
-#   drv = psql,
-#   dbname = "research_workspace",
-#   host = "oltp.db.axiomptk",
-#   port = 5432,
-#   password = key_get("workspace_read", keyring = "dbs"),
-#   user = "workspace_read"
-# )
-
 # Query RW db to get id and names for all projects in NPRB 
 # organization that match the regex
 q <- paste0(
