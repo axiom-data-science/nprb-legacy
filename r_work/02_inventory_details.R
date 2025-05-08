@@ -58,7 +58,7 @@ write_csv(projects_summary, timestamp_filename(data_dir, "02_projects_summary"))
 volume_all <- get_volumes(big_inv)
 vol_arch <- volume_all
 
-vol_arch$archive <- 
+vol_arch$new_archive <- 
   ifelse(vol_arch$project_id %in% potential_archives$project_id, 1, 0)
 
 write_csv(vol_arch, 
