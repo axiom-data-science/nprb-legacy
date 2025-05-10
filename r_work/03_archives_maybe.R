@@ -31,7 +31,7 @@ potential_archives <- read_csv(newest_file)
 
 proj_sort <- count(potential_archives, project_id, path, name="n_path") %>% 
   left_join(count(potential_archives, project_id, name="n_proj"), by=join_by(project_id))
-base_path <- "./"
+base_path <- "./data/"
 
 
 ### rewrite this. I'm not sure that it's does what it needs to do
@@ -40,7 +40,7 @@ base_path <- "./"
 ### the projects that have more than one zip and xml file
 for (i in 1:nrow(proj_sort)){
   if (proj_sort$n_proj[i] == 2 && proj_sort$n_proj[i] == 2){
-    this_one <- archives |>
+    this_one <- potential_archives |>
       filter(project_id == proj_sort$project_id[i],
              path == proj_sort$path[i])
     dir_out <- str_split(this_one$project_name[1], " ")[[1]][1]

@@ -49,10 +49,12 @@ q <- paste0(
       FROM organization 
       WHERE organization.name='North Pacific Research Board'))
   AND project.name ~ '^0[0-9]{3}[A-Za-z]* '
-  OR project.name ~ '^1[1-4]{1}[0-9]{2}[A-Za-z]* '"
+  OR project.name ~ '^1[1-4]{1}[0-9]{2}[A-Za-z]* '
+  AND project.deleted IS NULL"
 )
 
-project_names <- dbGetQuery(con, q)
+project_names <- arrange(dbGetQuery(con, q), proj_name)
+
 
 ## get all files in each project
 proj_ids <- project_names %>% 
@@ -60,17 +62,18 @@ proj_ids <- project_names %>%
   paste(collapse = ",")
 
 q <- paste0(
-  "SELECT id, bytes, filename, mimetype, folder_id, project_id 
+  "SELECT id as file_id, bytes, filename as file_name, mimetype, folder_id, project_id 
   FROM document
   WHERE project_id IN (", proj_ids ,") 
     AND deleted IS NULL
     AND folder_id IS NOT NULL"
 )
-remove(proj_ids)
-all_docs <- dbGetQuery(con, q)
 
-names(all_docs)[1] <- "file_id"
-names(all_docs)[3] <- "file_name"
+all_docs <- dbGetQuery(con, q)
+remove(proj_ids)
+
+#names(all_docs)[1] <- "file_id"
+#names(all_docs)[3] <- "file_name"
 
 ## get all folders for all files
 folder_ids <- all_docs %>% 
@@ -79,16 +82,15 @@ folder_ids <- all_docs %>%
   unique()
 
 q <- paste0(
-  "SELECT id, name, parent, project_id
+  "SELECT id as folder_id, name as folder_name, parent as parent_id, project_id
   FROM folder
   WHERE id in (", folder_ids, ")"
 )
-remove(folder_ids)
-
 all_folders <- get_parents(dbGetQuery(con, q))
+remove(folder_ids)
 dbDisconnect(con)
 
-names(all_folders)[1:3] <- c("folder_id", "folder_name", "parent_id")
+#names(all_folders)[1:3] <- c("folder_id", "folder_name", "parent_id")
 
 docs_w_folders <- all_docs %>% 
   left_join(all_folders, by = c("folder_id" = "folder_id")) %>% 
