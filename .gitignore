@@ -5,4 +5,5 @@ data/
 /r_work/.Renviron
 /r_work/scratch.R
 /r_work/data_out
+/r_work/.RData
 .Rproj.user
